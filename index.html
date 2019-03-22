@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>シューティングゲーム</title>
+    <style>
+        #canvas {
+            background-color: #333;
+        }
+    </style>
+    <script src="http://code.jquery.com/jquery-3.2.1.js"></script>
+</head>
+
+<body>
+
+    <canvas id="canvas" width="1200" height="800"></canvas>
+
+
+    <script>
+        // canvas base
+        // const can = document.getElementById("canvas");
+        // const ctx = can.getContext("2d");
+
+        let can = $("#canvas")[0] //canvasの場合（jqueryで扱い場合）[0]をつけないとエラーになる
+        let ctx = can.getContext("2d"); //これら二行がないとcanvas が動かない
+
+
+        /*---------------------------
+         * player機について
+         *--------------------------*/
+        //Player元オブジェクト
+
+        let player = {
+            //配列の場合はなんばん目という数字を使ってデータを取り出すけど、オブジェクトはキーを使ってデータを呼び出すから、似てるけど、拡張性が高い
+            posX: 0, //X座標を管理する場所
+            posY: can.height / 2, //UFOnoY座標を管理する場所
+            w: null, //空っぽ＝NULL 画像の横幅サイズ //０でもNULLでもこのfunction野中はOK 対して変わりはない
+            h: null, //がs像の高さサイズ
+            image: "", //画像データそのものを管理
+            draw: function () { //関数のデータもオブジェクトにセットできる
+                ctx.drawImage(img, 0, can.height / 2); //左上下中央に表示するための記述　０、heightで位置指定
+                player.w = img.width; //画像のデータ自体を格納
+                player.h = img.height;
+                player.image = img;
+            }
+        };
+
+        let img = new Image(); //画像データを中身はからやけど一応かく
+        img.src = "images/ufo.gif"; //この二行でimgタグ生成
+        img.onload = function () { //その中にfunctionで一個上の画像の位置を指定
+            // ctx.drawImage(img, 0, can.height / 2); //左上下中央に表示するための記述　０、heightで位置指定
+            // player.w = img.width; //画像のデータ自体を格納
+            // player.h = img.height;
+            // player.image = img;
+        }
+
+
+
+        // マウス操作でPlayer動かす関数
+        let mMove = function (e) { //位置情報を常に正確に取得するため
+            console.log(e);
+            //x座標
+            //y座標
+            ctx.clearRect(player.posX,player.posY,player.w,player.h); //消す！(長方形単位で消していく)
+            player.posX = e.offsetX;
+            player.posY = e.offsetY;
+            ctx.drawImage(player.image,player.posX,player.posY);
+        }
+
+        //マウスで動かした際のイベント設定
+        $(can).on("mousemove", mMove); //canvasの場合画像を動かすことはできず、決して貼り付けてを繰り替えす
+
+        /*---------------------------
+         * ボールについて
+         *--------------------------*/
+        //ボール元オブジェクト
+        // ctx.fillStyle = "#f00";
+        // ctx.fillRect(0,0,100,100);
+        let ball = {
+            w:8,
+            h:8,
+            color:"#f00",
+            speed:10
+        };
+
+
+        //ボールの各弾データ管理用の格納配列
+        let ballAry = [];
+
+        // ボール作成の関数
+        let ballInit = function(e){
+            let newBall = Object.assign({
+                posX:player.posX,
+                posY:player.posY
+            },ball);
+            ballAry.push(newBall);
+        }
+
+        // 配列内の全てのボールが移動するための関数
+        let ballMove = function(){
+            for(let i = 0; i < ballAry.length; i++){
+                ctx.clearRect(ballAry[i].posX,ballAry[i].posY,ballAry[i].w,ballAry[i].h);
+                ballAry[i].posX += ballAry[i].speed;
+                ctx.fillRect(ballAry[i].posX,ballAry[i].posY,ballAry[i].w,ballAry[i].h);
+            }
+        }
+
+        // 配列内の全てのボールを精査して、スクリーンアウトしたら消去する関数
+        let ballDelete = function(){
+            
+            //元の配列・・・ballAry
+            let newballAry = [];
+            for(let i=0; i < ballAry.length; i++)
+            if(ballAry[i].posX>=can.width){
+                delete ballAry[i];
+                
+            }else{
+                newballAry.push(ballAry[i]);
+            }
+            ballAry = newballAry;
+        }
+
+        // mousedownするたびにballデータを作成するようイベント追加
+        $(window).on("mousedown", ballInit );
+        /*---------------------------
+         * 敵について
+         *--------------------------*/
+        // 敵の元オブジェクト
+            let enemy = {
+                speed:5,
+                w:null,
+                h:null,
+                posX:can.width-8,
+                image:"",
+                draw: function () { //関数のデータもオブジェクトにセットできる
+                ctx.drawImage(mg, 1000, can.height / 2); //左上下中央に表示するための記述　０、heightで位置指定
+                player.w = img.width; //画像のデータ自体を格納
+                player.h = img.height;
+                player.image = img;
+
+                }
+        };
+
+            let mg = new Image(); //画像データを中身はからやけど一応かく
+                mg.src = "images/stamp5.png"; //この二行でimgタグ生成
+                mg.onload = function () { //その中にfunctionで一個上の画像の位置を指定
+                    // ctx.drawImage(img, 0, can.height / 2); //左上下中央に表示するための記述　０、heightで位置指定
+                    // player.w = img.width; //画像のデータ自体を格納
+                    // player.h = img.height;
+                    // player.image = img;
+        }
+
+
+
+        // 敵格納用配列
+            let enemyAry = [];
+
+        // 敵の出現+配列への格納のための関数
+            
+
+        // 敵を動かすための関数
+
+        // 敵がスクリーンアウトした際に配列から消去するための関数
+
+        /*---------------------------
+         * 当たり判定
+         *--------------------------*/
+
+
+        /*---------------------------
+         * 読み込み時に実行する関数
+         *--------------------------*/
+        $(window).on("load",function(){
+            player.draw();
+            enemy.draw();
+        });
+        //上で書いたオブジェクトを実行できる
+
+        /*---------------------------
+         * ループで実行する関数
+         *--------------------------*/
+         setInterval(function(){
+             ballMove();
+             ballDelete();
+         },100);
+
+    </script>
+</body>
+
+</html>
